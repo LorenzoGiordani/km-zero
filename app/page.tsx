@@ -1,65 +1,159 @@
-import Image from "next/image";
+"use client";
 
-export default function Home() {
+import { useEffect, useState } from "react";
+import { createClient } from "@/lib/supabase/client";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { toast } from "sonner";
+import { Product, Category, PickupPoint, CartItem } from "@/lib/types";
+import { formatPrice, haversineDistance } from "@/lib/utils";
+import { ShoppingBasket, MapPin } from "lucide-react";
+
+export default function HomePage() {
+  const [products, setProducts] = useState<Product[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [pickupPoints, setPickupPoints] = useState<PickupPoint[]>([]);
+  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+  const [selectedPickup, setSelectedPickup] = useState<string | null>(null);
+  const [cart, setCart] = useState<CartItem[]>([]);
+  const [loading, setLoading] = useState(true);
+  const supabase = createClient();
+
+  useEffect(() => {
+    supabase.from("categories").select("*").order("display_order").then(({ data }) => setCategories(data ?? []));
+    supabase.from("pickup_points").select("*").eq("is_active", true).then(({ data }) => setPickupPoints(data ?? []));
+    supabase.from("products").select("*, profiles(full_name, company_name), categories(name)").eq("is_active", true).then(({ data }) => {
+      setProducts(data ?? []);
+      setLoading(false);
+    });
+
+    const saved = localStorage.getItem("km0_cart");
+    if (saved) setCart(JSON.parse(saved));
+  }, [supabase]);
+
+  useEffect(() => {
+    localStorage.setItem("km0_cart", JSON.stringify(cart));
+  }, [cart]);
+
+  const addToCart = (product: Product) => {
+    setCart((prev) => {
+      const existing = prev.find((i) => i.product.id === product.id);
+      if (existing) {
+        return prev.map((i) =>
+          i.product.id === product.id ? { ...i, quantity: i.quantity + 1 } : i
+        );
+      }
+      return [...prev, { product, quantity: 1 }];
+    });
+    toast.success(`${product.name} aggiunto al carrello`);
+  };
+
+  const filtered = selectedCategory
+    ? products.filter((p) => p.category_id === selectedCategory)
+    : products;
+
+  const pickup = pickupPoints.find((p) => p.id === selectedPickup);
+
+  const distanceKm = (product: Product) => {
+    if (!pickup || !pickup.lat || !pickup.lng) return null;
+    const lat = 44.8; // producer placeholder lat
+    const lng = 10.3; // producer placeholder lng
+    return haversineDistance(pickup.lat, pickup.lng, lat, lng);
+  };
+
+  if (loading) return <div className="py-20 text-center text-stone-500">Caricamento...</div>;
+
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
-        </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
+    <div className="mx-auto max-w-6xl px-4 py-8">
+      <section className="mb-10 text-center">
+        <h1 className="font-serif text-4xl font-bold text-green-900 md:text-5xl">
+          Prodotti Locali, a KM Zero
+        </h1>
+        <p className="mx-auto mt-3 max-w-xl text-stone-600">
+          Ordina direttamente dai produttori della tua zona. Ritira presso i punti di consegna più vicini.
+        </p>
+      </section>
+
+      <div className="mb-8 flex flex-wrap items-center gap-4">
+        <div className="flex flex-wrap gap-2">
+          <Button
+            size="sm"
+            variant={selectedCategory === null ? "default" : "outline"}
+            onClick={() => setSelectedCategory(null)}
           >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
+            Tutti
+          </Button>
+          {categories.map((c) => (
+            <Button
+              key={c.id}
+              size="sm"
+              variant={selectedCategory === c.id ? "default" : "outline"}
+              onClick={() => setSelectedCategory(c.id)}
+            >
+              {c.name}
+            </Button>
+          ))}
         </div>
-      </main>
+        <div className="ml-auto flex items-center gap-2">
+          <MapPin className="h-4 w-4 text-stone-500" />
+          <select
+            className="rounded-md border border-stone-300 bg-white px-2 py-1 text-sm"
+            value={selectedPickup ?? ""}
+            onChange={(e) => setSelectedPickup(e.target.value || null)}
+          >
+            <option value="">Scegli punto ritiro</option>
+            {pickupPoints.map((p) => (
+              <option key={p.id} value={p.id}>
+                {p.name}
+              </option>
+            ))}
+          </select>
+        </div>
+      </div>
+
+      {filtered.length === 0 && (
+        <p className="py-12 text-center text-stone-500">Nessun prodotto disponibile.</p>
+      )}
+
+      <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+        {filtered.map((product) => {
+          const dist = distanceKm(product);
+          return (
+            <Card key={product.id} className="overflow-hidden border-stone-200">
+              <div className="aspect-video bg-stone-200 flex items-center justify-center text-stone-400">
+                {product.image_url ? (
+                  <img src={product.image_url} alt={product.name} className="h-full w-full object-cover" />
+                ) : (
+                  <span className="text-sm">Foto prodotto</span>
+                )}
+              </div>
+              <CardContent className="p-4">
+                <div className="mb-2 flex items-center justify-between">
+                  <Badge variant="secondary">{product.categories?.name}</Badge>
+                  {dist !== null && (
+                    <span className="text-xs text-stone-500">{dist.toFixed(1)} km</span>
+                  )}
+                </div>
+                <h3 className="font-serif text-xl font-semibold">{product.name}</h3>
+                <p className="mt-1 text-xs text-stone-500">
+                  {product.profiles?.company_name || product.profiles?.full_name}
+                </p>
+                <p className="mt-2 text-sm text-stone-600 line-clamp-2">{product.description}</p>
+                <div className="mt-4 flex items-center justify-between">
+                  <span className="text-lg font-bold text-green-800">
+                    €{formatPrice(product.price_per_kg)} / {product.unit_type}
+                  </span>
+                  <Button size="sm" onClick={() => addToCart(product)}>
+                    <ShoppingBasket className="mr-1 h-4 w-4" />
+                    Aggiungi
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          );
+        })}
+      </div>
     </div>
   );
 }
