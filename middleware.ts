@@ -28,11 +28,11 @@ export async function middleware(request: NextRequest) {
 
   const pathname = request.nextUrl.pathname;
 
-  if (pathname.startsWith("/produttore") || pathname.startsWith("/admin") || pathname.startsWith("/carrello")) {
+  if (pathname.startsWith("/produttore") || pathname.startsWith("/admin") || pathname.startsWith("/carrello") || pathname.startsWith("/api/admin")) {
     if (!user) {
       return NextResponse.redirect(new URL("/login", request.url));
     }
-    if (pathname.startsWith("/admin")) {
+    if (pathname.startsWith("/admin") || pathname.startsWith("/api/admin")) {
       const { data: profile } = await supabase.from("profiles").select("role").eq("id", user.id).single();
       if (profile?.role !== "admin") {
         return NextResponse.redirect(new URL("/", request.url));
@@ -50,5 +50,5 @@ export async function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/produttore/:path*", "/admin/:path*", "/carrello/:path*"],
+  matcher: ["/produttore/:path*", "/admin/:path*", "/carrello/:path*", "/api/admin/:path*"],
 };
