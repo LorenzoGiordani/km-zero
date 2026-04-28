@@ -8,6 +8,7 @@ import {
   Leaf,
   ArrowRight,
   MapPin,
+  ShoppingBasket,
   Users,
   Sprout,
   CheckCircle2,
