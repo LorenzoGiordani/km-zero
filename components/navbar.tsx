@@ -93,6 +93,9 @@ export function Navbar() {
           <Link href="/catalogo" className="text-sm font-medium text-muted-foreground hover:text-primary transition-colors">
             Catalogo
           </Link>
+          <Link href="/demo" className="text-sm font-medium text-accent hover:text-accent/80 transition-colors">
+            Demo
+          </Link>
           {dashboardLink && (
             <Link href={dashboardLink} className="text-sm font-medium text-muted-foreground hover:text-primary transition-colors">
               Dashboard
@@ -134,6 +137,7 @@ export function Navbar() {
         <div className="border-t border-border px-4 py-4 md:hidden space-y-3">
           <Link href="/" onClick={() => setMobileOpen(false)} className="block text-sm font-medium">Home</Link>
           <Link href="/catalogo" onClick={() => setMobileOpen(false)} className="block text-sm font-medium">Catalogo</Link>
+          <Link href="/demo" onClick={() => setMobileOpen(false)} className="block text-sm font-medium text-accent">Demo</Link>
           {dashboardLink && (
             <Link href={dashboardLink} onClick={() => setMobileOpen(false)} className="block text-sm font-medium">Dashboard</Link>
           )}
