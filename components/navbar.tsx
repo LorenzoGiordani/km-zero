@@ -84,11 +84,9 @@ export function Navbar() {
               </Button>
             </div>
           ) : (
-            <Button size="sm" variant="outline" asChild>
-              <Link href="/login">
-                <User className="mr-1 h-4 w-4" />
-                Accedi
-              </Link>
+            <Button size="sm" variant="outline" onClick={() => router.push("/login")}>
+              <User className="mr-1 h-4 w-4" />
+              Accedi
             </Button>
           )}
         </nav>
