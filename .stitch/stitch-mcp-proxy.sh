@@ -1,5 +1,5 @@
 #!/bin/bash
-DIR="$(cd "$(dirname "$0")" && pwd)"
+DIR="$(cd "$(dirname "$0")/.." && pwd)"
 if [ -f "$DIR/.env.local" ]; then
   export $(grep -v '^#' "$DIR/.env.local" | xargs)
 fi

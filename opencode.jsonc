@@ -3,7 +3,7 @@
   "mcp": {
     "stitch": {
       "type": "local",
-      "command": ["bash", ".stitch/stitch-mcp-proxy.sh"],
+      "command": ["npx", "@_davideast/stitch-mcp", "proxy"],
       "enabled": true
     }
   }
