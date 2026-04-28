@@ -360,7 +360,7 @@ function OrderCard({
   items: OrderItem[];
   expanded: boolean;
   onToggle: () => void;
-  onStatus: (id: string, status: string) => void;
+  onStatus: (id: string, status: string, orderData?: any) => void;
   statusBadge: (s: string) => string;
 }) {
   const slot = order.delivery_slots as any;
