@@ -7,9 +7,6 @@ import { toast } from "sonner";
 import {
   Leaf,
   ArrowRight,
-  Truck,
-  ShoppingBasket,
-  Store,
   MapPin,
   Users,
   Sprout,
@@ -195,19 +192,18 @@ export default function LandingPage() {
     <div className="grain-bg">
       {/* HERO */}
       <section className="relative overflow-hidden bg-background">
-        {/* Decorative blob with parallax */}
-        <div
-          aria-hidden
-          className="absolute -top-64 -right-64 h-[600px] w-[600px] animate-blob rounded-full bg-cream/80 opacity-50"
-          style={{ transform: `translateY(${parallaxOffset * 0.5}px)` }}
-        />
-        <div
-          aria-hidden
-          className="absolute -bottom-32 -left-32 h-[400px] w-[400px] animate-blob rounded-full bg-cream/60 opacity-40"
-          style={{ animationDelay: "-4s", transform: `translateY(${parallaxOffset * -0.3}px)` }}
-        />
+        {/* Hero background image */}
+        <div className="absolute inset-0 z-0">
+          <img
+            src="/images/generated/hero-landing.png"
+            alt=""
+            className="h-full w-full object-cover opacity-25 sm:opacity-30"
+            style={{ transform: `translateY(${parallaxOffset * 0.2}px) scale(1.1)` }}
+          />
+          <div className="absolute inset-0 bg-gradient-to-b from-background/60 via-background/40 to-background" />
+        </div>
 
-        <div className="relative mx-auto max-w-6xl px-4 py-24 sm:py-32 lg:py-40">
+        <div className="relative z-10 mx-auto max-w-6xl px-4 py-24 sm:py-32 lg:py-40">
           <div className="max-w-3xl">
             <p className="animate-reveal-up font-sans text-xs font-semibold uppercase tracking-[0.25em] text-accent">
               Piattaforma locale — Emilia-Romagna
@@ -291,19 +287,19 @@ export default function LandingPage() {
             {[
               {
                 step: "01",
-                icon: Store,
+                img: "/images/generated/step1-browse.png",
                 title: "Sfoglia il catalogo",
                 desc: "Frutta, verdura, formaggi, miele, carne: scegli tra centinaia di prodotti locali dei produttori vicino a te.",
               },
               {
                 step: "02",
-                icon: ShoppingBasket,
+                img: "/images/generated/step2-order.png",
                 title: "Fai la spesa",
                 desc: "Aggiungi al carrello quello che vuoi. Pagherai alla consegna, in contanti o con carta.",
               },
               {
                 step: "03",
-                icon: Truck,
+                img: "/images/generated/step3-pickup.png",
                 title: "Ritira vicino a casa",
                 desc: "Ogni settimana ritiri la tua spesa nel punto di consegna più comodo. Fresco, locale, sostenibile.",
               },
@@ -313,7 +309,11 @@ export default function LandingPage() {
                   <span className="font-sans text-5xl font-bold text-cream number-accent">
                     {item.step}
                   </span>
-                  <item.icon className="mt-4 h-10 w-10 text-accent" />
+                  <img
+                    src={item.img}
+                    alt={item.title}
+                    className="mt-4 h-24 w-24 rounded-xl object-cover"
+                  />
                   <h3 className="mt-4 font-serif text-xl font-semibold">
                     {item.title}
                   </h3>
@@ -375,28 +375,11 @@ export default function LandingPage() {
 
             <ScrollReveal>
               <div className="hidden lg:block">
-                <div className="relative mx-auto w-full max-w-sm">
-                  <div className="aspect-[3/4] rounded-3xl border-2 border-cream/20 bg-cream/5 p-8 backdrop-blur">
-                    <div className="h-full flex flex-col justify-between">
-                      <div>
-                        <div className="h-2 w-16 rounded-full bg-cream/30" />
-                        <div className="mt-6 space-y-4">
-                          <div className="h-32 rounded-xl bg-cream/10" />
-                          <div className="h-4 w-3/4 rounded-full bg-cream/20" />
-                          <div className="h-3 w-1/2 rounded-full bg-cream/15" />
-                        </div>
-                      </div>
-                      <div className="space-y-3">
-                        <div className="h-3 w-full rounded-full bg-cream/15" />
-                        <div className="h-3 w-2/3 rounded-full bg-cream/15" />
-                      </div>
-                    </div>
-                  </div>
-                  <div
-                    className="absolute -bottom-6 -right-6 h-24 w-24 animate-blob rounded-2xl bg-ochre/30"
-                    style={{ animationDelay: "-6s" }}
-                  />
-                </div>
+                <img
+                  src="/images/generated/farmer.png"
+                  alt="Produttore KM Zero"
+                  className="mx-auto w-full max-w-sm rounded-3xl shadow-2xl"
+                />
               </div>
             </ScrollReveal>
           </div>
@@ -486,7 +469,11 @@ export default function LandingPage() {
           <div className="grid gap-8 sm:grid-cols-3">
             <div>
               <div className="flex items-center gap-3 mb-4">
-                <Leaf className="h-6 w-6 text-primary" />
+                <img
+                  src="/images/generated/logo-km0.png"
+                  alt="KM Zero"
+                  className="h-8 w-8 rounded-lg object-contain"
+                />
                 <span className="font-serif text-xl font-bold text-foreground">KM Zero</span>
               </div>
               <p className="text-sm text-muted-foreground leading-relaxed">

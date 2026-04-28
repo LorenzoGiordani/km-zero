@@ -11,6 +11,28 @@ import { formatPrice, haversineDistance, calculateCO2, formatCO2 } from "@/lib/u
 import { ShoppingBasket, MapPin, ArrowLeft, ExternalLink } from "lucide-react";
 import Link from "next/link";
 
+const categoryImages: Record<string, string> = {
+  ortaggi: "/images/generated/vegetables.png",
+  verdure: "/images/generated/vegetables.png",
+  verdura: "/images/generated/vegetables.png",
+  vegetali: "/images/generated/vegetables.png",
+  frutta: "/images/generated/fruit.png",
+  formaggi: "/images/generated/dairy.png",
+  latticini: "/images/generated/dairy.png",
+  latte: "/images/generated/dairy.png",
+  yogurt: "/images/generated/dairy.png",
+  pane: "/images/generated/bread.png",
+  panetteria: "/images/generated/bread.png",
+  forno: "/images/generated/bread.png",
+  olio: "/images/generated/oil.png",
+};
+
+function getCategoryImage(categoryName: string | undefined): string {
+  if (!categoryName) return "/images/generated/vegetables.png";
+  const key = categoryName.toLowerCase().trim();
+  return categoryImages[key] ?? "/images/generated/vegetables.png";
+}
+
 export default function CatalogoPage() {
   const [products, setProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
@@ -153,11 +175,15 @@ export default function CatalogoPage() {
           const dist = distanceKm(product);
           return (
             <Card key={product.id} className="overflow-hidden border-border transition-all duration-300 hover:shadow-lg hover:-translate-y-1 hover:border-primary/20">
-              <div className="aspect-video bg-muted flex items-center justify-center text-muted-foreground">
+              <div className="aspect-video bg-muted flex items-center justify-center text-muted-foreground overflow-hidden">
                 {product.image_url ? (
                   <img src={product.image_url} alt={product.name} className="h-full w-full object-cover" />
                 ) : (
-                  <span className="text-sm">Foto prodotto</span>
+                  <img
+                    src={getCategoryImage(product.categories?.name)}
+                    alt={product.name}
+                    className="h-full w-full object-cover opacity-60"
+                  />
                 )}
               </div>
               <CardContent className="p-4">

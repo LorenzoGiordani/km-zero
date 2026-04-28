@@ -9,6 +9,7 @@ import { toast } from "sonner";
 import { CartItem, PickupPoint, DeliverySlot } from "@/lib/types";
 import { formatPrice, haversineDistance, calculateCO2, calculateDeliveryFee, formatCO2 } from "@/lib/utils";
 import { Trash2, Leaf, Truck } from "lucide-react";
+import Link from "next/link";
 
 export default function CarrelloPage() {
   const [cart, setCart] = useState<CartItem[]>([]);
@@ -159,7 +160,16 @@ export default function CarrelloPage() {
       <h1 className="mb-6 font-serif text-3xl font-bold">Il tuo carrello</h1>
 
       {cart.length === 0 ? (
-        <p className="py-12 text-center text-muted-foreground">Carrello vuoto.</p>
+        <div className="flex flex-col items-center py-16">
+          <img
+            src="/images/generated/empty-cart.png"
+            alt="Carrello vuoto"
+            className="h-48 w-48 object-contain opacity-70"
+          />
+          <p className="mt-6 text-center text-muted-foreground">
+            Il tuo carrello è vuoto. <Link href="/catalogo" className="text-primary underline underline-offset-2">Sfoglia il catalogo</Link> per trovare prodotti della tua zona.
+          </p>
+        </div>
       ) : (
         <div className="space-y-4">
           {cart.map((item, i) => (

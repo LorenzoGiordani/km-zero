@@ -76,6 +76,11 @@ export function Navbar() {
     }`}>
       <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-3">
         <Link href="/" className="flex items-center gap-2">
+          <img
+            src="/images/generated/logo-km0.png"
+            alt="KM Zero"
+            className="h-10 w-10 rounded-lg object-contain"
+          />
           <span className="font-serif text-2xl font-bold text-primary">
             KM Zero
           </span>
