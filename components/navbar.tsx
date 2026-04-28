@@ -12,8 +12,15 @@ export function Navbar() {
   const [role, setRole] = useState<string | null>(null);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
+  const [scrolled, setScrolled] = useState(false);
   const router = useRouter();
   const supabase = createClient();
+
+  useEffect(() => {
+    const onScroll = () => setScrolled(window.scrollY > 20);
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data }) => {
@@ -62,7 +69,11 @@ export function Navbar() {
       : null;
 
   return (
-    <header className="sticky top-0 z-50 border-b border-border bg-background/80 backdrop-blur">
+    <header className={`sticky top-0 z-50 transition-all duration-300 ${
+      scrolled
+        ? "border-b border-border bg-background/95 backdrop-blur shadow-sm"
+        : "border-transparent bg-background/50 backdrop-blur"
+    }`}>
       <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-3">
         <Link href="/" className="flex items-center gap-2">
           <span className="font-serif text-2xl font-bold text-primary">

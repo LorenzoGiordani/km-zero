@@ -162,8 +162,8 @@ export default function CarrelloPage() {
         <p className="py-12 text-center text-muted-foreground">Carrello vuoto.</p>
       ) : (
         <div className="space-y-4">
-          {cart.map((item) => (
-            <Card key={item.product.id} className="border-border">
+          {cart.map((item, i) => (
+            <Card key={item.product.id} className="border-border animate-reveal-up transition-all duration-300 hover:shadow-md" style={{ animationDelay: `${i * 80}ms` }}>
               <CardContent className="flex items-center justify-between p-4">
                 <div className="flex-1">
                   <h3 className="font-medium">{item.product.name}</h3>

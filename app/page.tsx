@@ -16,6 +16,16 @@ import {
   CheckCircle2,
 } from "lucide-react";
 
+function useParallax() {
+  const [offset, setOffset] = useState(0);
+  useEffect(() => {
+    const handler = () => setOffset(window.scrollY * 0.15);
+    window.addEventListener("scroll", handler, { passive: true });
+    return () => window.removeEventListener("scroll", handler);
+  }, []);
+  return offset;
+}
+
 function useScrollReveal() {
   const ref = useRef<HTMLDivElement>(null);
   const [visible, setVisible] = useState(false);
@@ -179,19 +189,22 @@ function ScrollReveal({ children, className = "" }: { children: React.ReactNode;
 }
 
 export default function LandingPage() {
+  const parallaxOffset = useParallax();
+
   return (
     <div className="grain-bg">
       {/* HERO */}
       <section className="relative overflow-hidden bg-background">
-        {/* Decorative blob */}
+        {/* Decorative blob with parallax */}
         <div
           aria-hidden
           className="absolute -top-64 -right-64 h-[600px] w-[600px] animate-blob rounded-full bg-cream/80 opacity-50"
+          style={{ transform: `translateY(${parallaxOffset * 0.5}px)` }}
         />
         <div
           aria-hidden
           className="absolute -bottom-32 -left-32 h-[400px] w-[400px] animate-blob rounded-full bg-cream/60 opacity-40"
-          style={{ animationDelay: "-4s" }}
+          style={{ animationDelay: "-4s", transform: `translateY(${parallaxOffset * -0.3}px)` }}
         />
 
         <div className="relative mx-auto max-w-6xl px-4 py-24 sm:py-32 lg:py-40">
@@ -469,17 +482,41 @@ export default function LandingPage() {
 
       {/* FOOTER */}
       <footer className="border-t border-border bg-background">
-        <div className="mx-auto max-w-6xl px-4 py-12">
-          <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
-            <div className="flex items-center gap-3">
-              <Leaf className="h-5 w-5 text-primary" />
-              <span className="font-serif text-lg font-semibold text-foreground">
-                KM Zero
-              </span>
+        <div className="mx-auto max-w-6xl px-4 py-16">
+          <div className="grid gap-8 sm:grid-cols-3">
+            <div>
+              <div className="flex items-center gap-3 mb-4">
+                <Leaf className="h-6 w-6 text-primary" />
+                <span className="font-serif text-xl font-bold text-foreground">KM Zero</span>
+              </div>
+              <p className="text-sm text-muted-foreground leading-relaxed">
+                Piattaforma per prodotti locali a chilometro zero. Dal produttore alla tua tavola, senza intermediari.
+              </p>
             </div>
+            <div>
+              <h4 className="font-serif text-sm font-semibold mb-4">Link</h4>
+              <ul className="space-y-2 text-sm text-muted-foreground">
+                <li><Link href="/catalogo" className="hover:text-primary transition-colors">Catalogo</Link></li>
+                <li><Link href="/login" className="hover:text-primary transition-colors">Accedi</Link></li>
+                <li><Link href="/carrello" className="hover:text-primary transition-colors">Carrello</Link></li>
+              </ul>
+            </div>
+            <div>
+              <h4 className="font-serif text-sm font-semibold mb-4">Contatti</h4>
+              <ul className="space-y-2 text-sm text-muted-foreground">
+                <li>Emilia-Romagna, Italia</li>
+                <li>info@km-zero.it</li>
+                <li>Parallelis SRL</li>
+              </ul>
+            </div>
+          </div>
+          <div className="mt-12 pt-6 border-t border-border flex flex-col sm:flex-row items-center justify-between gap-4">
             <p className="text-xs text-muted-foreground">
-              &copy; {new Date().getFullYear()} Parallelis — Piattaforma per prodotti locali a chilometro zero.
+              &copy; {new Date().getFullYear()} Parallelis — Tutti i diritti riservati.
             </p>
+            <div className="flex items-center gap-4 text-xs text-muted-foreground">
+              <span className="flex items-center gap-1"><Leaf className="h-3 w-3 text-primary" /> KM Zero è un progetto sostenibile</span>
+            </div>
           </div>
         </div>
       </footer>

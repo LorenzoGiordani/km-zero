@@ -64,7 +64,32 @@ export default function CatalogoPage() {
     return haversineDistance(pickup.lat, pickup.lng, prodLat, prodLng);
   };
 
-  if (loading) return <div className="py-20 text-center text-stone-500">Caricamento...</div>;
+  if (loading) return (
+    <div className="mx-auto max-w-6xl px-4 py-8">
+      <div className="mb-10 text-center">
+        <div className="mx-auto h-10 w-64 animate-pulse rounded-lg bg-muted" />
+        <div className="mx-auto mt-3 h-5 w-96 animate-pulse rounded bg-muted" />
+      </div>
+      <div className="mb-8 flex gap-2">
+        {[...Array(6)].map((_, i) => (
+          <div key={i} className="h-8 w-20 animate-pulse rounded-full bg-muted" />
+        ))}
+      </div>
+      <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+        {[...Array(6)].map((_, i) => (
+          <div key={i} className="rounded-xl border border-border overflow-hidden">
+            <div className="aspect-video animate-pulse bg-muted" />
+            <div className="p-4 space-y-3">
+              <div className="h-4 w-16 animate-pulse rounded bg-muted" />
+              <div className="h-6 w-3/4 animate-pulse rounded bg-muted" />
+              <div className="h-4 w-1/2 animate-pulse rounded bg-muted" />
+              <div className="h-5 w-24 animate-pulse rounded bg-muted" />
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
 
   return (
     <div className="mx-auto max-w-6xl px-4 py-8">
@@ -127,7 +152,7 @@ export default function CatalogoPage() {
         {filtered.map((product) => {
           const dist = distanceKm(product);
           return (
-            <Card key={product.id} className="overflow-hidden border-border">
+            <Card key={product.id} className="overflow-hidden border-border transition-all duration-300 hover:shadow-lg hover:-translate-y-1 hover:border-primary/20">
               <div className="aspect-video bg-muted flex items-center justify-center text-muted-foreground">
                 {product.image_url ? (
                   <img src={product.image_url} alt={product.name} className="h-full w-full object-cover" />
