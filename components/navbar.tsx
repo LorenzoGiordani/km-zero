@@ -5,12 +5,13 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
-import { ShoppingBasket, User, LogOut, Menu, X } from "lucide-react";
+import { ShoppingBasket, User, LogOut, Menu, X, Bell } from "lucide-react";
 
 export function Navbar() {
   const [user, setUser] = useState<any>(null);
   const [role, setRole] = useState<string | null>(null);
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [unreadCount, setUnreadCount] = useState(0);
   const router = useRouter();
   const supabase = createClient();
 
@@ -24,6 +25,12 @@ export function Navbar() {
           .eq("id", data.user.id)
           .single()
           .then(({ data: p }) => setRole(p?.role ?? "cliente"));
+        supabase
+          .from("notifications")
+          .select("id", { count: "exact", head: true })
+          .eq("user_id", data.user.id)
+          .eq("is_read", false)
+          .then(({ count }) => setUnreadCount(count ?? 0));
       }
     });
     const { data: listener } = supabase.auth.onAuthStateChange((_, session) => {
@@ -81,6 +88,14 @@ export function Navbar() {
           </Link>
           {user ? (
             <div className="flex items-center gap-3">
+              <button className="relative" onClick={() => router.push("/notifiche")} title="Notifiche">
+                <Bell className="h-4 w-4 text-muted-foreground hover:text-primary" />
+                {unreadCount > 0 && (
+                  <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-accent text-[10px] text-white font-bold">
+                    {unreadCount > 9 ? "9+" : unreadCount}
+                  </span>
+                )}
+              </button>
               <span className="text-xs text-muted-foreground">{user.email}</span>
               <Button size="sm" variant="ghost" onClick={handleLogout}>
                 <LogOut className="h-4 w-4" />

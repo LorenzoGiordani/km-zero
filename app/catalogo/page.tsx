@@ -8,7 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { Product, Category, PickupPoint, CartItem } from "@/lib/types";
 import { formatPrice, haversineDistance, calculateCO2, formatCO2 } from "@/lib/utils";
-import { ShoppingBasket, MapPin, ArrowLeft } from "lucide-react";
+import { ShoppingBasket, MapPin, ArrowLeft, ExternalLink } from "lucide-react";
 import Link from "next/link";
 
 export default function CatalogoPage() {
@@ -149,7 +149,9 @@ export default function CatalogoPage() {
                 </div>
                 <h3 className="font-serif text-xl font-semibold">{product.name}</h3>
                 <p className="mt-1 text-xs text-muted-foreground">
-                  {product.profiles?.company_name || product.profiles?.full_name}
+                  <Link href={`/produttori/${product.producer_id}`} className="hover:text-primary underline underline-offset-2">
+                    {product.profiles?.company_name || product.profiles?.full_name}
+                  </Link>
                 </p>
                 <p className="mt-2 text-sm text-muted-foreground line-clamp-2">{product.description}</p>
                 <div className="mt-4 flex items-center justify-between">

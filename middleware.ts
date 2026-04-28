@@ -28,7 +28,7 @@ export async function middleware(request: NextRequest) {
 
   const pathname = request.nextUrl.pathname;
 
-  if (pathname.startsWith("/produttore") || pathname.startsWith("/admin") || pathname.startsWith("/carrello") || pathname.startsWith("/api/admin")) {
+  if (pathname.startsWith("/produttore") || pathname.startsWith("/admin") || pathname.startsWith("/carrello") || pathname.startsWith("/api/admin") || pathname.startsWith("/notifiche")) {
     if (!user) {
       return NextResponse.redirect(new URL("/login", request.url));
     }
@@ -50,5 +50,5 @@ export async function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/produttore/:path*", "/admin/:path*", "/carrello/:path*", "/api/admin/:path*"],
+  matcher: ["/produttore/:path*", "/admin/:path*", "/carrello/:path*", "/api/admin/:path*", "/notifiche/:path*"],
 };

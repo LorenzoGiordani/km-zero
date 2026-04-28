@@ -19,6 +19,8 @@ import {
   RefreshCw,
   ChevronDown,
   ChevronUp,
+  ClipboardCheck,
+  Bell,
 } from "lucide-react";
 
 interface RouteData {
@@ -46,6 +48,7 @@ export default function AdminPage() {
   const [generatingSlots, setGeneratingSlots] = useState(false);
   const [calculatingRoute, setCalculatingRoute] = useState(false);
   const [expandedOrders, setExpandedOrders] = useState<Set<string>>(new Set());
+  const [generatingReport, setGeneratingReport] = useState(false);
   const router = useRouter();
   const supabase = createClient();
 
@@ -83,8 +86,24 @@ export default function AdminPage() {
     setLoading(false);
   };
 
-  const updateStatus = async (id: string, status: string) => {
+  const updateStatus = async (id: string, status: string, orderData?: any) => {
     await supabase.from("orders").update({ status }).eq("id", id);
+
+    // Crea notifica per il cliente quando confermato
+    if (status === "confermato" && orderData?.customer_id) {
+      const deliverySlot = orderData.delivery_slots;
+      const dateMsg = deliverySlot
+        ? `Consegna prevista: ${new Date(deliverySlot.delivery_date).toLocaleDateString("it-IT")}`
+        : "La data di consegna ti verrà comunicata a breve.";
+      await supabase.from("notifications").insert({
+        user_id: orderData.customer_id,
+        title: "Ordine confermato",
+        message: `Il tuo ordine è stato confermato! ${dateMsg}. Preparati a ricevere prodotti freschi a km zero.`,
+        type: "success",
+        order_id: id,
+      });
+    }
+
     toast.success("Stato aggiornato");
     loadData();
   };
@@ -117,6 +136,19 @@ export default function AdminPage() {
       toast.error("Errore calcolo percorso");
     } finally {
       setCalculatingRoute(false);
+    }
+  };
+
+  const handleGenerateReport = async () => {
+    setGeneratingReport(true);
+    try {
+      const res = await fetch("/api/admin/daily-report", { method: "POST", body: JSON.stringify({}) });
+      await res.json();
+      toast.success("Report giornaliero generato");
+    } catch {
+      toast.error("Errore");
+    } finally {
+      setGeneratingReport(false);
     }
   };
 
@@ -187,6 +219,14 @@ export default function AdminPage() {
         >
           <RefreshCw className={`mr-2 h-4 w-4 ${generatingSlots ? "animate-spin" : ""}`} />
           {generatingSlots ? "Generazione..." : "Genera slot consegna"}
+        </Button>
+        <Button
+          variant="outline"
+          onClick={handleGenerateReport}
+          disabled={generatingReport}
+        >
+          <ClipboardCheck className="mr-2 h-4 w-4" />
+          {generatingReport ? "Generazione..." : "Consuntiva giornata"}
         </Button>
       </div>
 
@@ -379,7 +419,7 @@ function OrderCard({
             )}
             <div className="flex gap-2">
               {order.status === "in_attesa" && (
-                <Button size="sm" onClick={() => onStatus(order.id, "confermato")}>Conferma</Button>
+                <Button size="sm" onClick={() => onStatus(order.id, "confermato", order)}>Conferma</Button>
               )}
               {order.status === "confermato" && (
                 <Button size="sm" onClick={() => onStatus(order.id, "in_consegna")}>In consegna</Button>
