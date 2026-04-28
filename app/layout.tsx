@@ -19,8 +19,8 @@ const sans = DM_Sans({
 });
 
 export const metadata: Metadata = {
-  title: "KM Zero — Prodotti Locali, Consegna Settimanale",
-  description: "Ordina direttamente da produttori locali. Frutta, verdura, formaggi, miele e molto altro. Ritira presso i punti di consegna nella tua zona.",
+  title: "KM Zero — Prodotti Locali a Chilometro Zero | La tua spesa dal produttore",
+  description: "Ordina frutta, verdura, formaggi e molto altro direttamente dai produttori locali. Consegna settimanale nei punti di ritiro. Fresco, locale, sostenibile.",
 };
 
 export default function RootLayout({
@@ -33,7 +33,7 @@ export default function RootLayout({
       lang="it"
       className={`${serif.variable} ${sans.variable} h-full antialiased`}
     >
-      <body className="min-h-full flex flex-col font-sans bg-stone-50 text-stone-800">
+      <body className="min-h-full flex flex-col font-sans bg-background text-foreground">
         <Navbar />
         <main className="flex-1">{children}</main>
         <Toaster position="top-center" />

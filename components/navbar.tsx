@@ -55,30 +55,33 @@ export function Navbar() {
       : null;
 
   return (
-    <header className="sticky top-0 z-50 border-b border-stone-200 bg-stone-50/80 backdrop-blur">
+    <header className="sticky top-0 z-50 border-b border-border bg-background/80 backdrop-blur">
       <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-3">
         <Link href="/" className="flex items-center gap-2">
-          <span className="font-serif text-2xl font-bold text-green-800">
+          <span className="font-serif text-2xl font-bold text-primary">
             KM Zero
           </span>
         </Link>
 
         <nav className="hidden items-center gap-6 md:flex">
-          <Link href="/" className="text-sm font-medium text-stone-600 hover:text-green-800">
+          <Link href="/" className="text-sm font-medium text-muted-foreground hover:text-primary transition-colors">
+            Home
+          </Link>
+          <Link href="/catalogo" className="text-sm font-medium text-muted-foreground hover:text-primary transition-colors">
             Catalogo
           </Link>
           {dashboardLink && (
-            <Link href={dashboardLink} className="text-sm font-medium text-stone-600 hover:text-green-800">
+            <Link href={dashboardLink} className="text-sm font-medium text-muted-foreground hover:text-primary transition-colors">
               Dashboard
             </Link>
           )}
-          <Link href="/carrello" className="flex items-center gap-1 text-sm font-medium text-stone-600 hover:text-green-800">
+          <Link href="/carrello" className="flex items-center gap-1 text-sm font-medium text-muted-foreground hover:text-primary transition-colors">
             <ShoppingBasket className="h-4 w-4" />
             Carrello
           </Link>
           {user ? (
             <div className="flex items-center gap-3">
-              <span className="text-xs text-stone-500">{user.email}</span>
+              <span className="text-xs text-muted-foreground">{user.email}</span>
               <Button size="sm" variant="ghost" onClick={handleLogout}>
                 <LogOut className="h-4 w-4" />
               </Button>
@@ -97,8 +100,9 @@ export function Navbar() {
       </div>
 
       {mobileOpen && (
-        <div className="border-t border-stone-200 px-4 py-4 md:hidden space-y-3">
-          <Link href="/" onClick={() => setMobileOpen(false)} className="block text-sm font-medium">Catalogo</Link>
+        <div className="border-t border-border px-4 py-4 md:hidden space-y-3">
+          <Link href="/" onClick={() => setMobileOpen(false)} className="block text-sm font-medium">Home</Link>
+          <Link href="/catalogo" onClick={() => setMobileOpen(false)} className="block text-sm font-medium">Catalogo</Link>
           {dashboardLink && (
             <Link href={dashboardLink} onClick={() => setMobileOpen(false)} className="block text-sm font-medium">Dashboard</Link>
           )}
