@@ -7,7 +7,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { Product, Category, PickupPoint, CartItem } from "@/lib/types";
-import { formatPrice, haversineDistance } from "@/lib/utils";
+import { formatPrice, haversineDistance, calculateCO2, formatCO2 } from "@/lib/utils";
 import { ShoppingBasket, MapPin, ArrowLeft } from "lucide-react";
 import Link from "next/link";
 
@@ -24,7 +24,7 @@ export default function CatalogoPage() {
   useEffect(() => {
     supabase.from("categories").select("*").order("display_order").then(({ data }) => setCategories(data ?? []));
     supabase.from("pickup_points").select("*").eq("is_active", true).then(({ data }) => setPickupPoints(data ?? []));
-    supabase.from("products").select("*, profiles(full_name, company_name), categories(name)").eq("is_active", true).then(({ data }) => {
+    supabase.from("products").select("*, profiles(full_name, company_name, lat, lng), categories(name)").eq("is_active", true).then(({ data }) => {
       setProducts(data ?? []);
       setLoading(false);
     });
@@ -58,9 +58,10 @@ export default function CatalogoPage() {
 
   const distanceKm = (product: Product) => {
     if (!pickup || !pickup.lat || !pickup.lng) return null;
-    const lat = 44.8;
-    const lng = 10.3;
-    return haversineDistance(pickup.lat, pickup.lng, lat, lng);
+    const prodLat = product.profiles?.lat;
+    const prodLng = product.profiles?.lng;
+    if (!prodLat || !prodLng) return null;
+    return haversineDistance(pickup.lat, pickup.lng, prodLat, prodLng);
   };
 
   if (loading) return <div className="py-20 text-center text-stone-500">Caricamento...</div>;
@@ -137,9 +138,14 @@ export default function CatalogoPage() {
               <CardContent className="p-4">
                 <div className="mb-2 flex items-center justify-between">
                   <Badge variant="secondary">{product.categories?.name}</Badge>
-                  {dist !== null && (
-                    <span className="text-xs text-muted-foreground">{dist.toFixed(1)} km</span>
-                  )}
+                  <div className="flex items-center gap-2">
+                    {dist !== null && (
+                      <>
+                        <span className="text-xs text-muted-foreground">{dist.toFixed(1)} km</span>
+                        <span className="text-xs text-accent font-medium">{formatCO2(calculateCO2(dist).co2Kg)} CO₂</span>
+                      </>
+                    )}
+                  </div>
                 </div>
                 <h3 className="font-serif text-xl font-semibold">{product.name}</h3>
                 <p className="mt-1 text-xs text-muted-foreground">

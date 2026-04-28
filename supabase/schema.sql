@@ -1,4 +1,4 @@
--- KM Zero — Schema MVP
+-- KM Zero — Schema MVP + Routing + CO2
 
 -- Enum ruoli
 CREATE TYPE user_role AS ENUM ('cliente', 'produttore', 'admin');
@@ -31,6 +31,8 @@ CREATE TABLE profiles (
   phone TEXT,
   company_name TEXT,
   company_description TEXT,
+  lat DOUBLE PRECISION,
+  lng DOUBLE PRECISION,
   created_at TIMESTAMPTZ DEFAULT now(),
   updated_at TIMESTAMPTZ DEFAULT now()
 );
@@ -51,6 +53,28 @@ CREATE TABLE products (
   updated_at TIMESTAMPTZ DEFAULT now()
 );
 
+-- Configurazione sistema (CO2, fee, etc.)
+CREATE TABLE system_config (
+  key TEXT PRIMARY KEY,
+  value TEXT NOT NULL,
+  description TEXT,
+  updated_at TIMESTAMPTZ DEFAULT now()
+);
+
+-- Slot consegna
+CREATE TABLE delivery_slots (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  pickup_point_id UUID REFERENCES pickup_points(id),
+  delivery_date DATE NOT NULL,
+  time_start TIME NOT NULL DEFAULT '08:00',
+  time_end TIME NOT NULL DEFAULT '12:00',
+  max_orders INT NOT NULL DEFAULT 20,
+  current_orders INT NOT NULL DEFAULT 0,
+  is_active BOOLEAN DEFAULT true,
+  created_at TIMESTAMPTZ DEFAULT now(),
+  UNIQUE(pickup_point_id, delivery_date, time_start)
+);
+
 -- Ordini
 CREATE TABLE orders (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -59,7 +83,11 @@ CREATE TABLE orders (
   status TEXT NOT NULL DEFAULT 'in_attesa',
   total_amount DECIMAL(10,2) NOT NULL DEFAULT 0,
   delivery_fee DECIMAL(10,2) NOT NULL DEFAULT 0,
+  co2_kg DECIMAL(10,2),
+  co2_cost DECIMAL(10,2),
+  delivery_discount DECIMAL(10,2) DEFAULT 0,
   delivery_date DATE,
+  delivery_slot_id UUID REFERENCES delivery_slots(id),
   created_at TIMESTAMPTZ DEFAULT now(),
   updated_at TIMESTAMPTZ DEFAULT now()
 );
@@ -72,6 +100,16 @@ CREATE TABLE order_items (
   quantity DECIMAL(10,2) NOT NULL,
   price_per_kg DECIMAL(10,2) NOT NULL,
   subtotal DECIMAL(10,2) NOT NULL,
+  created_at TIMESTAMPTZ DEFAULT now()
+);
+
+-- Waitlist
+CREATE TABLE waitlist (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  email TEXT NOT NULL UNIQUE,
+  role TEXT NOT NULL,
+  company_name TEXT,
+  message TEXT,
   created_at TIMESTAMPTZ DEFAULT now()
 );
 
@@ -90,6 +128,12 @@ INSERT INTO pickup_points (name, address, lat, lng) VALUES
   ('Mercato Rionale Parma Centro', 'Via Garibaldi 15, Parma', 44.8015, 10.3280),
   ('Sede Cooperativa Il Noce', 'Strada della Repubblica 42, Collecchio', 44.7520, 10.2150),
   ('Parcheggio Centro Sportivo', 'Via delle Acacie 8, Montechiarugolo', 44.6950, 10.4150);
+
+INSERT INTO system_config (key, value, description) VALUES
+  ('co2_kg_per_km', '0.15', 'Emissioni CO2 in kg per km percorso'),
+  ('co2_cost_per_kg', '2.0', 'Costo EUR per kg di CO2'),
+  ('delivery_base_fee', '3.0', 'Costo base consegna EUR'),
+  ('delivery_fee_per_km', '0.50', 'Costo aggiuntivo per km oltre 5km');
 
 -- Trigger updated_at
 CREATE OR REPLACE FUNCTION update_updated_at()
@@ -114,6 +158,9 @@ ALTER TABLE orders ENABLE ROW LEVEL SECURITY;
 ALTER TABLE order_items ENABLE ROW LEVEL SECURITY;
 ALTER TABLE pickup_points ENABLE ROW LEVEL SECURITY;
 ALTER TABLE categories ENABLE ROW LEVEL SECURITY;
+ALTER TABLE system_config ENABLE ROW LEVEL SECURITY;
+ALTER TABLE delivery_slots ENABLE ROW LEVEL SECURITY;
+ALTER TABLE waitlist ENABLE ROW LEVEL SECURITY;
 
 -- Policies
 CREATE POLICY "Public read categories" ON categories FOR SELECT USING (true);
@@ -145,3 +192,15 @@ CREATE POLICY "Related read order items" ON order_items FOR SELECT USING (
 CREATE POLICY "Customer insert order items" ON order_items FOR INSERT WITH CHECK (
   EXISTS (SELECT 1 FROM orders o WHERE o.id = order_items.order_id AND o.customer_id = auth.uid())
 );
+
+CREATE POLICY "Admin manage config" ON system_config FOR ALL USING (
+  EXISTS (SELECT 1 FROM profiles p WHERE p.id = auth.uid() AND p.role = 'admin')
+);
+CREATE POLICY "Public read config" ON system_config FOR SELECT USING (true);
+
+CREATE POLICY "Public read active delivery slots" ON delivery_slots FOR SELECT USING (is_active = true);
+CREATE POLICY "Admin manage delivery slots" ON delivery_slots FOR ALL USING (
+  EXISTS (SELECT 1 FROM profiles p WHERE p.id = auth.uid() AND p.role = 'admin')
+);
+
+CREATE POLICY "Anyone insert waitlist" ON waitlist FOR INSERT WITH CHECK (true);

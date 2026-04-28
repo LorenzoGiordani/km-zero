@@ -6,15 +6,18 @@ import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { toast } from "sonner";
-import { CartItem, PickupPoint } from "@/lib/types";
-import { formatPrice } from "@/lib/utils";
-import { Trash2 } from "lucide-react";
+import { CartItem, PickupPoint, DeliverySlot } from "@/lib/types";
+import { formatPrice, haversineDistance, calculateCO2, calculateDeliveryFee, formatCO2 } from "@/lib/utils";
+import { Trash2, Leaf, Truck } from "lucide-react";
 
 export default function CarrelloPage() {
   const [cart, setCart] = useState<CartItem[]>([]);
   const [pickupPoints, setPickupPoints] = useState<PickupPoint[]>([]);
+  const [deliverySlots, setDeliverySlots] = useState<DeliverySlot[]>([]);
   const [selectedPickup, setSelectedPickup] = useState<string | null>(null);
+  const [selectedSlot, setSelectedSlot] = useState<string | null>(null);
   const [user, setUser] = useState<any>(null);
+  const [systemConfig, setSystemConfig] = useState<Record<string, string>>({});
   const router = useRouter();
   const supabase = createClient();
 
@@ -22,8 +25,33 @@ export default function CarrelloPage() {
     const saved = localStorage.getItem("km0_cart");
     if (saved) setCart(JSON.parse(saved));
     supabase.from("pickup_points").select("*").eq("is_active", true).then(({ data }) => setPickupPoints(data ?? []));
+    supabase.from("system_config").select("*").then(({ data }) => {
+      const cfg: Record<string, string> = {};
+      (data ?? []).forEach((r: { key: string; value: string }) => (cfg[r.key] = r.value));
+      setSystemConfig(cfg);
+    });
     supabase.auth.getUser().then(({ data }) => setUser(data.user));
   }, [supabase]);
+
+  useEffect(() => {
+    if (selectedPickup) {
+      supabase
+        .from("delivery_slots")
+        .select("*")
+        .eq("pickup_point_id", selectedPickup)
+        .eq("is_active", true)
+        .gte("delivery_date", new Date().toISOString().split("T")[0])
+        .order("delivery_date")
+        .then(({ data }) => setDeliverySlots(data ?? []));
+    } else {
+      setDeliverySlots([]);
+      setSelectedSlot(null);
+    }
+  }, [selectedPickup]);
+
+  useEffect(() => {
+    localStorage.setItem("km0_cart", JSON.stringify(cart));
+  }, [cart]);
 
   const updateQty = (productId: string, delta: number) => {
     setCart((prev) =>
@@ -41,8 +69,34 @@ export default function CarrelloPage() {
     setCart((prev) => prev.filter((i) => i.product.id !== productId));
   };
 
-  const total = cart.reduce((s, i) => s + i.product.price_per_kg * i.quantity, 0);
-  const deliveryFee = selectedPickup ? 3.5 : 0;
+  // Calcolo distanza media ponderata dai produttori al punto ritiro
+  const calcRouteMetrics = () => {
+    const pickup = pickupPoints.find((p) => p.id === selectedPickup);
+    if (!pickup || !pickup.lat || !pickup.lng) return { totalDist: 0, maxDist: 0 };
+
+    let totalDist = 0;
+    let maxDist = 0;
+    let count = 0;
+
+    cart.forEach((item) => {
+      const plat = item.product.profiles?.lat;
+      const plng = item.product.profiles?.lng;
+      if (plat && plng) {
+        const dist = haversineDistance(pickup.lat!, pickup.lng!, plat, plng);
+        totalDist += dist;
+        if (dist > maxDist) maxDist = dist;
+        count++;
+      }
+    });
+
+    return { totalDist: count > 0 ? totalDist / count : 0, maxDist };
+  };
+
+  const subtotal = cart.reduce((s, i) => s + i.product.price_per_kg * i.quantity, 0);
+  const { maxDist } = calcRouteMetrics();
+  const { fee: deliveryFee, discount } = calculateDeliveryFee(maxDist, cart.length);
+  const { co2Kg, co2Cost } = calculateCO2(maxDist, parseFloat(systemConfig.co2_kg_per_km || "0.15"));
+  const total = subtotal + deliveryFee;
 
   const handleOrder = async () => {
     if (!user) {
@@ -64,8 +118,12 @@ export default function CarrelloPage() {
       .insert({
         customer_id: user.id,
         pickup_point_id: selectedPickup,
-        total_amount: total,
+        total_amount: subtotal,
         delivery_fee: deliveryFee,
+        co2_kg: co2Kg,
+        co2_cost: co2Cost,
+        delivery_discount: discount,
+        delivery_slot_id: selectedSlot || null,
         status: "in_attesa",
       })
       .select()
@@ -101,17 +159,20 @@ export default function CarrelloPage() {
       <h1 className="mb-6 font-serif text-3xl font-bold">Il tuo carrello</h1>
 
       {cart.length === 0 ? (
-        <p className="py-12 text-center text-stone-500">Carrello vuoto.</p>
+        <p className="py-12 text-center text-muted-foreground">Carrello vuoto.</p>
       ) : (
         <div className="space-y-4">
           {cart.map((item) => (
-            <Card key={item.product.id} className="border-stone-200">
+            <Card key={item.product.id} className="border-border">
               <CardContent className="flex items-center justify-between p-4">
-                <div>
+                <div className="flex-1">
                   <h3 className="font-medium">{item.product.name}</h3>
-                  <p className="text-sm text-stone-500">
+                  <p className="text-sm text-muted-foreground">
                     €{formatPrice(item.product.price_per_kg)} / {item.product.unit_type}
                   </p>
+                  {item.product.profiles?.company_name && (
+                    <p className="text-xs text-muted-foreground/70">{item.product.profiles.company_name}</p>
+                  )}
                 </div>
                 <div className="flex items-center gap-3">
                   <div className="flex items-center gap-2">
@@ -130,11 +191,13 @@ export default function CarrelloPage() {
             </Card>
           ))}
 
-          <div className="mt-4 space-y-2">
+          <div className="mt-4 space-y-3">
             <div>
-              <label className="text-sm font-medium">Punto di ritiro</label>
+              <label className="text-sm font-medium flex items-center gap-1">
+                <Truck className="h-4 w-4" /> Punto di ritiro
+              </label>
               <select
-                className="mt-1 w-full rounded-md border border-stone-300 bg-white px-3 py-2 text-sm"
+                className="mt-1 w-full rounded-md border border-border bg-white px-3 py-2 text-sm"
                 value={selectedPickup ?? ""}
                 onChange={(e) => setSelectedPickup(e.target.value || null)}
               >
@@ -144,19 +207,56 @@ export default function CarrelloPage() {
                 ))}
               </select>
             </div>
-            <div className="flex justify-between text-sm">
-              <span>Subtotale</span>
-              <span>€{formatPrice(total)}</span>
+
+            {deliverySlots.length > 0 && (
+              <div>
+                <label className="text-sm font-medium">Slot consegna</label>
+                <select
+                  className="mt-1 w-full rounded-md border border-border bg-white px-3 py-2 text-sm"
+                  value={selectedSlot ?? ""}
+                  onChange={(e) => setSelectedSlot(e.target.value || null)}
+                >
+                  <option value="">Qualsiasi data disponibile</option>
+                  {deliverySlots.map((s) => (
+                    <option key={s.id} value={s.id}>
+                      {new Date(s.delivery_date).toLocaleDateString("it-IT", { weekday: "short", day: "numeric", month: "short" })} — {s.time_start}-{s.time_end}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
+
+            <div className="space-y-2 rounded-lg bg-muted/50 p-4">
+              <div className="flex justify-between text-sm">
+                <span>Subtotale prodotti</span>
+                <span>€{formatPrice(subtotal)}</span>
+              </div>
+              <div className="flex justify-between text-sm">
+                <span className="flex items-center gap-1">
+                  <Truck className="h-3 w-3" /> Consegna
+                  {maxDist > 0 && <span className="text-xs text-muted-foreground">(~{maxDist.toFixed(1)} km)</span>}
+                </span>
+                <span>€{formatPrice(deliveryFee)}</span>
+              </div>
+              {discount > 0 && (
+                <div className="flex justify-between text-sm text-green-700">
+                  <span>Sconto multi-prodotto</span>
+                  <span>-€{formatPrice(discount)}</span>
+                </div>
+              )}
+              <div className="flex justify-between text-sm text-muted-foreground">
+                <span className="flex items-center gap-1">
+                  <Leaf className="h-3 w-3" /> Impatto CO₂
+                </span>
+                <span>{formatCO2(co2Kg)}</span>
+              </div>
+              <div className="flex justify-between border-t border-border pt-2 text-lg font-bold">
+                <span>Totale</span>
+                <span>€{formatPrice(total)}</span>
+              </div>
             </div>
-            <div className="flex justify-between text-sm">
-              <span>Consegna</span>
-              <span>€{formatPrice(deliveryFee)}</span>
-            </div>
-            <div className="flex justify-between border-t border-stone-200 pt-2 text-lg font-bold">
-              <span>Totale</span>
-              <span>€{formatPrice(total + deliveryFee)}</span>
-            </div>
-            <Button className="w-full" onClick={handleOrder}>
+
+            <Button className="w-full" size="lg" onClick={handleOrder}>
               Conferma ordine — paga alla consegna
             </Button>
           </div>

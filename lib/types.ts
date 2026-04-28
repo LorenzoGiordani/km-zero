@@ -7,6 +7,8 @@ export interface Profile {
   phone: string | null;
   company_name: string | null;
   company_description: string | null;
+  lat: number | null;
+  lng: number | null;
 }
 
 export interface Category {
@@ -36,7 +38,7 @@ export interface Product {
   image_url: string | null;
   is_active: boolean;
   created_at: string;
-  profiles?: { full_name: string | null; company_name: string | null } | null;
+  profiles?: { full_name: string | null; company_name: string | null; lat?: number | null; lng?: number | null } | null;
   categories?: { name: string } | null;
 }
 
@@ -62,6 +64,37 @@ export interface Order {
   total_amount: number;
   delivery_fee: number;
   delivery_date: string | null;
+  delivery_slot_id: string | null;
+  co2_kg: number | null;
+  co2_cost: number | null;
+  delivery_discount: number | null;
   created_at: string;
   pickup_points?: { name: string } | null;
+  delivery_slots?: { delivery_date: string; time_start: string; time_end: string } | null;
+}
+
+export interface DeliverySlot {
+  id: string;
+  pickup_point_id: string;
+  delivery_date: string;
+  time_start: string;
+  time_end: string;
+  max_orders: number;
+  current_orders: number;
+  is_active: boolean;
+}
+
+export interface SystemConfig {
+  key: string;
+  value: string;
+  description: string | null;
+}
+
+export interface WaitlistEntry {
+  id: string;
+  email: string;
+  role: string;
+  company_name: string | null;
+  message: string | null;
+  created_at: string;
 }

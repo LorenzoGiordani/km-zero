@@ -27,3 +27,36 @@ export function haversineDistance(
 export function formatPrice(n: number): string {
   return n.toLocaleString("it-IT", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 }
+
+export function calculateCO2(
+  distanceKm: number,
+  co2KgPerKm: number = 0.15
+): { co2Kg: number; co2Cost: number } {
+  const co2Kg = distanceKm * co2KgPerKm;
+  const co2Cost = co2Kg * 2.0;
+  return { co2Kg, co2Cost };
+}
+
+export function calculateDeliveryFee(
+  distanceKm: number,
+  itemCount: number
+): { fee: number; discount: number } {
+  const baseFee = 3.0;
+  const feePerKm = 0.50;
+  const extraKm = Math.max(0, distanceKm - 5);
+
+  let fee = baseFee + extraKm * feePerKm;
+
+  // Sconto multi-prodotto
+  let discount = 0;
+  if (itemCount >= 5) discount = 20;
+  else if (itemCount >= 3) discount = 7;
+  else if (itemCount >= 2) discount = 3;
+
+  return { fee: Math.max(0, fee - discount), discount };
+}
+
+export function formatCO2(co2Kg: number): string {
+  if (co2Kg >= 1) return `${co2Kg.toFixed(1)} kg`;
+  return `${(co2Kg * 1000).toFixed(0)} g`;
+}
