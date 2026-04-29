@@ -21,6 +21,16 @@ const sans = DM_Sans({
 export const metadata: Metadata = {
   title: "KM Zero — Prodotti Locali a Chilometro Zero | La tua spesa dal produttore",
   description: "Ordina frutta, verdura, formaggi e molto altro direttamente dai produttori locali. Consegna settimanale nei punti di ritiro. Fresco, locale, sostenibile.",
+  icons: {
+    icon: "/images/generated/logo-km0.webp",
+  },
+  openGraph: {
+    title: "KM Zero — La tua spesa dal produttore",
+    description: "Ordina frutta, verdura, formaggi e molto altro direttamente dai produttori locali. Consegna settimanale nei punti di ritiro vicino a te.",
+    images: "/images/generated/hero-landing.webp",
+    url: "https://km-zero-eight.vercel.app",
+    type: "website",
+  },
 };
 
 export default function RootLayout({

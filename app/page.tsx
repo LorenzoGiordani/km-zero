@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import {
@@ -244,10 +245,11 @@ export default function LandingPage() {
           aria-hidden
           className="absolute inset-0 z-0 lg:hidden"
         >
-          <img
-            src="/images/generated/hero-landing.png"
+          <Image
+            src="/images/generated/hero-landing.webp"
             alt=""
-            className="h-full w-full object-cover opacity-20"
+            fill
+            className="object-cover opacity-20"
           />
           <div className="absolute inset-0 bg-gradient-to-b from-background/70 via-background/50 to-background" />
         </div>
@@ -320,11 +322,12 @@ export default function LandingPage() {
 
             {/* Right: hero image — desktop only */}
             <div className="hidden lg:block animate-reveal-up anim-delay-200">
-              <div className="relative">
-                <img
-                  src="/images/generated/hero-landing.png"
+              <div className="relative aspect-[4/3]">
+                <Image
+                  src="/images/generated/hero-landing.webp"
                   alt="Prodotti locali a km zero"
-                  className="w-full rounded-3xl shadow-2xl"
+                  fill
+                  className="rounded-3xl shadow-2xl object-cover"
                   style={{ transform: `translateY(${parallaxOffset * 0.1}px)` }}
                 />
                 <div
@@ -356,19 +359,19 @@ export default function LandingPage() {
             {[
               {
                 step: "01",
-                img: "/images/generated/step1-browse.png",
+                img: "/images/generated/step1-browse.webp",
                 title: "Sfoglia il catalogo",
                 desc: "Frutta, verdura, formaggi, miele, carne: scegli tra centinaia di prodotti locali dei produttori vicino a te.",
               },
               {
                 step: "02",
-                img: "/images/generated/step2-order.png",
+                img: "/images/generated/step2-order.webp",
                 title: "Fai la spesa",
                 desc: "Aggiungi al carrello quello che vuoi. Pagherai alla consegna, in contanti o con carta.",
               },
               {
                 step: "03",
-                img: "/images/generated/step3-pickup.png",
+                img: "/images/generated/step3-pickup.webp",
                 title: "Ritira vicino a casa",
                 desc: "Ogni settimana ritiri la tua spesa nel punto di consegna più comodo. Fresco, locale, sostenibile.",
               },
@@ -378,11 +381,14 @@ export default function LandingPage() {
                   <span className="font-sans text-5xl font-bold text-cream number-accent">
                     {item.step}
                   </span>
-                  <img
-                    src={item.img}
-                    alt={item.title}
-                    className="mt-4 h-24 w-24 rounded-xl object-cover"
-                  />
+                  <div className="mt-4 relative h-24 w-24">
+                    <Image
+                      src={item.img}
+                      alt={item.title}
+                      fill
+                      className="rounded-xl object-cover"
+                    />
+                  </div>
                   <h3 className="mt-4 font-serif text-xl font-semibold">
                     {item.title}
                   </h3>
@@ -444,11 +450,14 @@ export default function LandingPage() {
 
             <ScrollReveal>
               <div className="hidden lg:block">
-                <img
-                  src="/images/generated/farmer.png"
-                  alt="Produttore KM Zero"
-                  className="mx-auto w-full max-w-sm rounded-3xl shadow-2xl"
-                />
+                <div className="relative aspect-[3/4] mx-auto w-full max-w-sm">
+                  <Image
+                    src="/images/generated/farmer.webp"
+                    alt="Produttore KM Zero nel suo campo"
+                    fill
+                    className="rounded-3xl shadow-2xl object-cover"
+                  />
+                </div>
               </div>
             </ScrollReveal>
           </div>
@@ -590,10 +599,12 @@ export default function LandingPage() {
           <div className="grid gap-8 sm:grid-cols-3">
             <div>
               <div className="flex items-center gap-3 mb-4">
-                <img
-                  src="/images/generated/logo-km0.png"
-                  alt="KM Zero"
-                  className="h-8 w-8 rounded-lg object-contain"
+                <Image
+                  src="/images/generated/logo-km0.webp"
+                  alt="KM Zero logo"
+                  width={32}
+                  height={32}
+                  className="rounded-lg object-contain"
                 />
                 <span className="font-serif text-xl font-bold text-foreground">KM Zero</span>
               </div>

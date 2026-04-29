@@ -10,6 +10,7 @@ import { CartItem, PickupPoint, DeliverySlot } from "@/lib/types";
 import { formatPrice, haversineDistance, calculateCO2, calculateDeliveryFee, formatCO2 } from "@/lib/utils";
 import { Trash2, Leaf, Truck } from "lucide-react";
 import Link from "next/link";
+import Image from "next/image";
 import { MOCK_PICKUP_POINTS, MOCK_DELIVERY_SLOTS } from "@/lib/mock-data";
 
 export default function CarrelloPage() {
@@ -169,10 +170,12 @@ export default function CarrelloPage() {
 
       {cart.length === 0 ? (
         <div className="flex flex-col items-center py-16">
-          <img
-            src="/images/generated/empty-cart.png"
+          <Image
+            src="/images/generated/empty-cart.webp"
             alt="Carrello vuoto"
-            className="h-48 w-48 object-contain opacity-70"
+            width={192}
+            height={192}
+            className="object-contain opacity-70"
           />
           <p className="mt-6 text-center text-muted-foreground">
             Il tuo carrello è vuoto. <Link href="/catalogo" className="text-primary underline underline-offset-2">Sfoglia il catalogo</Link> per trovare prodotti della tua zona.

@@ -10,6 +10,7 @@ import { Product, Category, PickupPoint, CartItem, DeliverySlot } from "@/lib/ty
 import { formatPrice, haversineDistance, calculateCO2, formatCO2 } from "@/lib/utils";
 import { ShoppingBasket, MapPin, ArrowLeft, Leaf, Truck } from "lucide-react";
 import Link from "next/link";
+import Image from "next/image";
 import { MOCK_PRODUCTS, MOCK_CATEGORIES, MOCK_PICKUP_POINTS, MOCK_DELIVERY_SLOTS } from "@/lib/mock-data";
 
 /* ─── LEAFLET MAP COMPONENT ────────────────────────── */
@@ -260,12 +261,13 @@ export default function CatalogoPage() {
           const dist = distanceKm(product);
           return (
             <Card key={product.id} className="overflow-hidden border-border transition-all duration-300 hover:shadow-lg hover:-translate-y-1 hover:border-primary/20 group">
-              <div className="aspect-video bg-muted overflow-hidden">
+              <div className="aspect-video bg-muted overflow-hidden relative">
                 {product.image_url ? (
-                  <img
+                  <Image
                     src={product.image_url}
                     alt={product.name}
-                    className="h-full w-full object-cover group-hover:scale-105 transition-transform duration-500"
+                    fill
+                    className="object-cover group-hover:scale-105 transition-transform duration-500"
                   />
                 ) : (
                   <div className="h-full w-full flex items-center justify-center bg-muted text-muted-foreground text-sm">
