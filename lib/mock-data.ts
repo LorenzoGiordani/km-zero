@@ -140,7 +140,7 @@ export const MOCK_PRODUCTS: Product[] = [
     id: "mock-p-15", producer_id: "mock-prod-6", category_id: "mock-cat-6",
     name: "Miele di Castagno",
     description: "Miele scuro dal sapore intenso e amarognolo, ricco di proprietà benefiche.",
-    price_per_kg: 11.00, unit_type: "kg", quantity_available: 20, image_url: "/images/generated/miele.png", is_active: true,
+    price_per_kg: 11.00, unit_type: "kg", quantity_available: 20, image_url: "/images/generated/miele-castagno.png", is_active: true,
     created_at: new Date().toISOString(),
     profiles: { full_name: "Apicoltura Verde", company_name: "Apicoltura Verde", lat: 44.514, lng: 9.992 },
     categories: { name: "Miele" },

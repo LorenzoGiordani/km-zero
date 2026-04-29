@@ -68,22 +68,25 @@ export default function CatalogoPage() {
   const supabase = createClient();
 
   useEffect(() => {
-    supabase.from("categories").select("*").order("display_order").then(({ data }) => {
-      setCategories(data?.length ? data : MOCK_CATEGORIES);
+    supabase.from("categories").select("*").order("display_order").then(({ data: catData }) => {
+      supabase.from("pickup_points").select("*").eq("is_active", true).then(({ data: ppData }) => {
+        supabase.from("products").select("*, profiles(full_name, company_name, lat, lng), categories(name)").eq("is_active", true).then(({ data: prodData }) => {
+          if (prodData?.length) {
+            setProducts(prodData);
+            setCategories(catData?.length ? catData : MOCK_CATEGORIES);
+            setPickupPoints(ppData?.length ? ppData : MOCK_PICKUP_POINTS);
+            setUsingMock(false);
+          } else {
+            setProducts(MOCK_PRODUCTS);
+            setCategories(MOCK_CATEGORIES);
+            setPickupPoints(MOCK_PICKUP_POINTS);
+            setUsingMock(true);
+          }
+          setLoading(false);
+        });
+      });
     });
-    supabase.from("pickup_points").select("*").eq("is_active", true).then(({ data }) => {
-      setPickupPoints(data?.length ? data : MOCK_PICKUP_POINTS);
-    });
-    supabase.from("products").select("*, profiles(full_name, company_name, lat, lng), categories(name)").eq("is_active", true).then(({ data }) => {
-      if (data?.length) {
-        setProducts(data);
-        setUsingMock(false);
-      } else {
-        setProducts(MOCK_PRODUCTS);
-        setUsingMock(true);
-      }
-      setLoading(false);
-    });
+
 
     const saved = localStorage.getItem("km0_cart");
     if (saved) setCart(JSON.parse(saved));

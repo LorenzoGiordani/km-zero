@@ -186,6 +186,52 @@ function ScrollReveal({ children, className = "" }: { children: React.ReactNode;
   );
 }
 
+/* ─── LEAFLET MAP ──────────────────────────────── */
+
+function PickupMap() {
+  const mapRef = useRef<HTMLDivElement>(null);
+  const [loaded, setLoaded] = useState(false);
+
+  useEffect(() => {
+    if (typeof window === "undefined" || loaded) return;
+    const init = async () => {
+      const L = (await import("leaflet")).default;
+      await import("leaflet/dist/leaflet.css");
+      if (!mapRef.current) return;
+      const map = L.map(mapRef.current).setView([44.72, 10.3], 11);
+      L.tileLayer("https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png", {
+        attribution: '&copy;CARTO',
+        maxZoom: 19,
+      }).addTo(map);
+
+      const icon = L.divIcon({
+        className: "",
+        html: `<div style="width:28px;height:28px;border-radius:50% 50% 50% 0;background:#4A5D23;transform:rotate(-45deg);border:3px solid #fff;box-shadow:0 2px 6px rgba(0,0,0,.3)"></div>`,
+        iconSize: [28, 28],
+        iconAnchor: [14, 28],
+      });
+
+      const points = [
+        { name: "Mercato Rionale Centro", lat: 44.8015, lng: 10.328, addr: "Via Garibaldi 15, Parma" },
+        { name: "Parcheggio Centro Sportivo", lat: 44.695, lng: 10.415, addr: "Via delle Acacie 8, Montechiarugolo" },
+        { name: "Cooperativa Il Noce", lat: 44.752, lng: 10.215, addr: "Strada della Repubblica 42, Collecchio" },
+      ];
+
+      points.forEach((p) => {
+        L.marker([p.lat, p.lng], { icon })
+          .addTo(map)
+          .bindPopup(`<strong>${p.name}</strong><br/>${p.addr}`);
+      });
+
+      setTimeout(() => map.invalidateSize(), 300);
+      setLoaded(true);
+    };
+    init();
+  }, []);
+
+  return <div ref={mapRef} className="h-full min-h-[400px] w-full rounded-2xl border border-border bg-muted" />;
+}
+
 export default function LandingPage() {
   const parallaxOffset = useParallax();
 
@@ -193,77 +239,99 @@ export default function LandingPage() {
     <div className="grain-bg">
       {/* HERO */}
       <section className="relative overflow-hidden bg-background">
-        {/* Hero background image */}
-        <div className="absolute inset-0 z-0">
+        {/* Mobile: background image subtle */}
+        <div
+          aria-hidden
+          className="absolute inset-0 z-0 lg:hidden"
+        >
           <img
             src="/images/generated/hero-landing.png"
             alt=""
-            className="h-full w-full object-cover opacity-25 sm:opacity-30"
-            style={{ transform: `translateY(${parallaxOffset * 0.2}px) scale(1.1)` }}
+            className="h-full w-full object-cover opacity-20"
           />
-          <div className="absolute inset-0 bg-gradient-to-b from-background/60 via-background/40 to-background" />
+          <div className="absolute inset-0 bg-gradient-to-b from-background/70 via-background/50 to-background" />
         </div>
 
-        <div className="relative z-10 mx-auto max-w-6xl px-4 py-24 sm:py-32 lg:py-40">
-          <div className="max-w-3xl">
-            <p className="animate-reveal-up font-sans text-xs font-semibold uppercase tracking-[0.25em] text-accent">
-              Piattaforma locale — Emilia-Romagna
-            </p>
-            <h1 className="animate-reveal-up anim-delay-100 mt-6 font-serif text-5xl font-bold leading-[1.08] text-foreground sm:text-7xl lg:text-8xl">
-              Il sapore vero,
-              <br />
-              <span className="text-primary">a pochi passi</span>
-              <br />
-              da casa.
-            </h1>
-            <p className="animate-reveal-up anim-delay-200 mt-8 max-w-xl text-lg leading-relaxed text-muted-foreground sm:text-xl">
-              Ordina frutta, verdura, formaggi e molto altro direttamente dai
-              produttori della tua zona. Consegna settimanale nei punti di
-              ritiro vicino a te.
-            </p>
-            <div className="animate-reveal-up anim-delay-300 mt-10 flex flex-wrap gap-4">
-              <Link href="/catalogo">
-                <Button size="lg" className="font-serif tracking-wide text-base">
-                  Scopri il catalogo
-                  <ArrowRight className="ml-2 h-4 w-4" />
-                </Button>
-              </Link>
-              <Link href="#waitlist">
-                <Button
-                  variant="outline"
-                  size="lg"
-                  className="font-serif tracking-wide text-base border-2"
-                >
-                  Diventa produttore
-                </Button>
-              </Link>
+        <div className="relative z-10 mx-auto max-w-6xl px-4 py-12 sm:py-16 lg:py-20">
+          <div className="grid gap-8 lg:grid-cols-2 lg:gap-16 items-center">
+            {/* Left: text */}
+            <div>
+              <p className="animate-reveal-up font-sans text-xs font-semibold uppercase tracking-[0.25em] text-accent">
+                Piattaforma locale — Emilia-Romagna
+              </p>
+              <h1 className="animate-reveal-up anim-delay-100 mt-6 font-serif text-5xl font-bold leading-[1.06] text-foreground sm:text-7xl lg:text-6xl xl:text-7xl">
+                Il sapore vero,
+                <br />
+                <span className="text-primary">a pochi passi</span>
+                <br />
+                da casa.
+              </h1>
+              <p className="animate-reveal-up anim-delay-200 mt-8 max-w-lg text-lg leading-relaxed text-muted-foreground sm:text-xl">
+                Ordina frutta, verdura, formaggi e molto altro direttamente dai
+                produttori della tua zona. Consegna settimanale nei punti di
+                ritiro vicino a te.
+              </p>
+              <div className="animate-reveal-up anim-delay-300 mt-10 flex flex-wrap gap-4">
+                <Link href="/catalogo">
+                  <Button size="lg" className="font-serif tracking-wide text-base">
+                    Scopri il catalogo
+                    <ArrowRight className="ml-2 h-4 w-4" />
+                  </Button>
+                </Link>
+                <Link href="#waitlist">
+                  <Button
+                    variant="outline"
+                    size="lg"
+                    className="font-serif tracking-wide text-base border-2"
+                  >
+                    Diventa produttore
+                  </Button>
+                </Link>
+              </div>
+
+              {/* Mini stats */}
+              <div className="animate-reveal-up anim-delay-500 mt-14 flex gap-10 border-t border-border pt-8">
+                <div>
+                  <p className="font-serif text-3xl font-bold text-primary number-accent">
+                    0 km
+                  </p>
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    Distanza massima
+                  </p>
+                </div>
+                <div>
+                  <p className="font-serif text-3xl font-bold text-primary number-accent">
+                    100%
+                  </p>
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    Pagamento alla consegna
+                  </p>
+                </div>
+                <div>
+                  <p className="font-serif text-3xl font-bold text-primary number-accent">
+                    -70%
+                  </p>
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    CO₂ vs supermercato
+                  </p>
+                </div>
+              </div>
             </div>
 
-            {/* Mini stats */}
-            <div className="animate-reveal-up anim-delay-500 mt-16 flex gap-10 border-t border-border pt-8">
-              <div>
-                <p className="font-serif text-3xl font-bold text-primary number-accent">
-                  0 km
-                </p>
-                <p className="mt-1 text-xs text-muted-foreground">
-                  Distanza massima
-                </p>
-              </div>
-              <div>
-                <p className="font-serif text-3xl font-bold text-primary number-accent">
-                  100%
-                </p>
-                <p className="mt-1 text-xs text-muted-foreground">
-                  Pagamento alla consegna
-                </p>
-              </div>
-              <div>
-                <p className="font-serif text-3xl font-bold text-primary number-accent">
-                  -70%
-                </p>
-                <p className="mt-1 text-xs text-muted-foreground">
-                  CO₂ vs supermercato
-                </p>
+            {/* Right: hero image — desktop only */}
+            <div className="hidden lg:block animate-reveal-up anim-delay-200">
+              <div className="relative">
+                <img
+                  src="/images/generated/hero-landing.png"
+                  alt="Prodotti locali a km zero"
+                  className="w-full rounded-3xl shadow-2xl"
+                  style={{ transform: `translateY(${parallaxOffset * 0.1}px)` }}
+                />
+                <div
+                  aria-hidden
+                  className="absolute -bottom-6 -right-6 h-28 w-28 animate-blob rounded-2xl bg-primary/20"
+                  style={{ animationDelay: "-2s" }}
+                />
               </div>
             </div>
           </div>
@@ -383,6 +451,58 @@ export default function LandingPage() {
                 />
               </div>
             </ScrollReveal>
+          </div>
+        </div>
+      </section>
+
+      {/* PUNTI RITIRO */}
+      <section className="bg-cream">
+        <div className="mx-auto max-w-6xl px-4 py-24 sm:py-32">
+          <ScrollReveal>
+            <p className="font-sans text-xs font-semibold uppercase tracking-[0.25em] text-accent">
+              Dove ritirare
+            </p>
+            <h2 className="mt-4 font-serif text-4xl font-bold text-foreground sm:text-5xl">
+              Punti di ritiro
+              <br />
+              <span className="text-primary">vicino a te.</span>
+            </h2>
+          </ScrollReveal>
+          <div className="mt-12 grid gap-8 lg:grid-cols-5">
+            <div className="lg:col-span-2 space-y-4">
+              {[
+                { name: "Mercato Rionale Centro", address: "Via Garibaldi 15, Parma", info: "Lun, Mer, Ven — 9:00-12:00" },
+                { name: "Parcheggio Centro Sportivo", address: "Via delle Acacie 8, Montechiarugolo", info: "Lun, Mer, Ven — 8:00-11:00" },
+                { name: "Cooperativa Il Noce", address: "Strada della Repubblica 42, Collecchio", info: "Lun, Mer, Ven — 9:00-12:00" },
+              ].map((p, i) => (
+                <ScrollReveal key={p.name}>
+                  <div className="rounded-2xl border-2 border-border bg-white p-5 transition-all duration-300 hover:border-primary/30 hover:shadow-md">
+                    <div className="flex items-start gap-3">
+                      <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary/10 font-serif text-lg font-bold text-primary">
+                        0{i + 1}
+                      </span>
+                      <div>
+                        <h3 className="font-serif text-lg font-semibold">{p.name}</h3>
+                        <p className="mt-1 text-sm text-muted-foreground">{p.address}</p>
+                        <p className="mt-1 text-xs text-accent">{p.info}</p>
+                      </div>
+                    </div>
+                  </div>
+                </ScrollReveal>
+              ))}
+              <ScrollReveal>
+                <div className="mt-4 rounded-2xl border-2 border-dashed border-border bg-white/50 p-5 text-center">
+                  <p className="text-sm text-muted-foreground">
+                    Altri punti in arrivo. <a href="#waitlist" className="text-primary underline underline-offset-2">Candidati</a> come punto ritiro.
+                  </p>
+                </div>
+              </ScrollReveal>
+            </div>
+            <div className="lg:col-span-3">
+              <ScrollReveal>
+                <PickupMap />
+              </ScrollReveal>
+            </div>
           </div>
         </div>
       </section>
