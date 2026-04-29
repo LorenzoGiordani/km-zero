@@ -175,7 +175,7 @@ export default function CarrelloPage() {
             alt="Carrello vuoto"
             width={192}
             height={192}
-            className="object-contain opacity-70"
+            className="object-contain opacity-70 animate-float-pulse"
           />
           <p className="mt-6 text-center text-muted-foreground">
             Il tuo carrello è vuoto. <Link href="/catalogo" className="text-primary underline underline-offset-2">Sfoglia il catalogo</Link> per trovare prodotti della tua zona.

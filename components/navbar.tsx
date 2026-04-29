@@ -134,7 +134,7 @@ export function Navbar() {
       </div>
 
       {mobileOpen && (
-        <div className="border-t border-border px-4 py-4 md:hidden space-y-3">
+        <div className="border-t border-border px-4 py-4 md:hidden space-y-3 animate-slide-down">
           <Link href="/" onClick={() => setMobileOpen(false)} className="block text-sm font-medium">Home</Link>
           <Link href="/catalogo" onClick={() => setMobileOpen(false)} className="block text-sm font-medium">Catalogo</Link>
           {dashboardLink && (

@@ -275,7 +275,7 @@ export default function LandingPage() {
               </p>
               <div className="animate-reveal-up anim-delay-300 mt-10 flex flex-wrap gap-4">
                 <Link href="/catalogo">
-                  <Button size="lg" className="font-serif tracking-wide text-base">
+                  <Button size="lg" className="font-serif tracking-wide text-base btn-press">
                     Scopri il catalogo
                     <ArrowRight className="ml-2 h-4 w-4" />
                   </Button>
@@ -284,7 +284,7 @@ export default function LandingPage() {
                   <Button
                     variant="outline"
                     size="lg"
-                    className="font-serif tracking-wide text-base border-2"
+                    className="font-serif tracking-wide text-base border-2 btn-press"
                   >
                     Diventa produttore
                   </Button>
@@ -377,7 +377,7 @@ export default function LandingPage() {
               },
             ].map((item, i) => (
               <ScrollReveal key={item.step}>
-                <div className="group relative rounded-2xl border-2 border-border bg-background p-8 transition-all duration-300 hover:border-primary/30 hover:shadow-lg">
+                <div className="group relative rounded-2xl border-2 border-border bg-background p-8 card-press hover:border-primary/30 hover:shadow-lg">
                   <span className="font-sans text-5xl font-bold text-cream number-accent">
                     {item.step}
                   </span>
