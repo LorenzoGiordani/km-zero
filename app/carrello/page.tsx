@@ -10,6 +10,7 @@ import { CartItem, PickupPoint, DeliverySlot } from "@/lib/types";
 import { formatPrice, haversineDistance, calculateCO2, calculateDeliveryFee, formatCO2 } from "@/lib/utils";
 import { Trash2, Leaf, Truck } from "lucide-react";
 import Link from "next/link";
+import { MOCK_PICKUP_POINTS, MOCK_DELIVERY_SLOTS } from "@/lib/mock-data";
 
 export default function CarrelloPage() {
   const [cart, setCart] = useState<CartItem[]>([]);
@@ -25,7 +26,7 @@ export default function CarrelloPage() {
   useEffect(() => {
     const saved = localStorage.getItem("km0_cart");
     if (saved) setCart(JSON.parse(saved));
-    supabase.from("pickup_points").select("*").eq("is_active", true).then(({ data }) => setPickupPoints(data ?? []));
+    supabase.from("pickup_points").select("*").eq("is_active", true).then(({ data }) => setPickupPoints(data?.length ? data : MOCK_PICKUP_POINTS));
     supabase.from("system_config").select("*").then(({ data }) => {
       const cfg: Record<string, string> = {};
       (data ?? []).forEach((r: { key: string; value: string }) => (cfg[r.key] = r.value));
@@ -43,7 +44,14 @@ export default function CarrelloPage() {
         .eq("is_active", true)
         .gte("delivery_date", new Date().toISOString().split("T")[0])
         .order("delivery_date")
-        .then(({ data }) => setDeliverySlots(data ?? []));
+        .then(({ data }) => {
+          if (data?.length) {
+            setDeliverySlots(data);
+          } else {
+            const mock = MOCK_DELIVERY_SLOTS.filter(s => s.pickup_point_id === selectedPickup);
+            setDeliverySlots(mock);
+          }
+        });
     } else {
       setDeliverySlots([]);
       setSelectedSlot(null);

@@ -228,14 +228,6 @@ export default function LandingPage() {
                   <ArrowRight className="ml-2 h-4 w-4" />
                 </Button>
               </Link>
-              <Link href="/demo">
-                <Button
-                  size="lg"
-                  className="font-serif tracking-wide text-base bg-accent hover:bg-accent/90 border-0"
-                >
-                  Prova la demo
-                </Button>
-              </Link>
               <Link href="#waitlist">
                 <Button
                   variant="outline"

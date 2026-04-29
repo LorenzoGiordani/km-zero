@@ -1,37 +1,59 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
-import { Product, Category, PickupPoint, CartItem } from "@/lib/types";
+import { Product, Category, PickupPoint, CartItem, DeliverySlot } from "@/lib/types";
 import { formatPrice, haversineDistance, calculateCO2, formatCO2 } from "@/lib/utils";
-import { ShoppingBasket, MapPin, ArrowLeft, ExternalLink } from "lucide-react";
+import { ShoppingBasket, MapPin, ArrowLeft, Leaf, Truck } from "lucide-react";
 import Link from "next/link";
+import { MOCK_PRODUCTS, MOCK_CATEGORIES, MOCK_PICKUP_POINTS, MOCK_DELIVERY_SLOTS } from "@/lib/mock-data";
 
-const categoryImages: Record<string, string> = {
-  ortaggi: "/images/generated/vegetables.png",
-  verdure: "/images/generated/vegetables.png",
-  verdura: "/images/generated/vegetables.png",
-  vegetali: "/images/generated/vegetables.png",
-  frutta: "/images/generated/fruit.png",
-  formaggi: "/images/generated/dairy.png",
-  latticini: "/images/generated/dairy.png",
-  latte: "/images/generated/dairy.png",
-  yogurt: "/images/generated/dairy.png",
-  pane: "/images/generated/bread.png",
-  panetteria: "/images/generated/bread.png",
-  forno: "/images/generated/bread.png",
-  olio: "/images/generated/oil.png",
-};
+/* ─── LEAFLET MAP COMPONENT ────────────────────────── */
 
-function getCategoryImage(categoryName: string | undefined): string {
-  if (!categoryName) return "/images/generated/vegetables.png";
-  const key = categoryName.toLowerCase().trim();
-  return categoryImages[key] ?? "/images/generated/vegetables.png";
+function PickupMap({ points }: { points: PickupPoint[] }) {
+  const mapRef = useRef<HTMLDivElement>(null);
+  const [loaded, setLoaded] = useState(false);
+
+  useEffect(() => {
+    if (typeof window === "undefined" || loaded) return;
+    const init = async () => {
+      const L = (await import("leaflet")).default;
+      await import("leaflet/dist/leaflet.css");
+      if (!mapRef.current) return;
+      const map = L.map(mapRef.current).setView([44.72, 10.3], 10);
+      L.tileLayer("https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png", {
+        attribution: '&copy;CARTO',
+        maxZoom: 19,
+      }).addTo(map);
+
+      const icon = L.divIcon({
+        className: "",
+        html: `<div style="width:28px;height:28px;border-radius:50% 50% 50% 0;background:#4A5D23;transform:rotate(-45deg);border:3px solid #fff;box-shadow:0 2px 6px rgba(0,0,0,.3)"></div>`,
+        iconSize: [28, 28],
+        iconAnchor: [14, 28],
+      });
+
+      points.forEach((p) => {
+        if (p.lat && p.lng) {
+          L.marker([p.lat, p.lng], { icon })
+            .addTo(map)
+            .bindPopup(`<strong>${p.name}</strong><br/>${p.address}`);
+        }
+      });
+      setTimeout(() => map.invalidateSize(), 200);
+      setLoaded(true);
+    };
+    init();
+  }, [points]);
+
+  return <div ref={mapRef} className="h-[280px] w-full rounded-xl border border-border bg-muted" />;
 }
+
+/* ─── CATALOGO PAGE ────────────────────────────────── */
 
 export default function CatalogoPage() {
   const [products, setProducts] = useState<Product[]>([]);
@@ -41,13 +63,25 @@ export default function CatalogoPage() {
   const [selectedPickup, setSelectedPickup] = useState<string | null>(null);
   const [cart, setCart] = useState<CartItem[]>([]);
   const [loading, setLoading] = useState(true);
+  const [usingMock, setUsingMock] = useState(false);
+  const [showMap, setShowMap] = useState(false);
   const supabase = createClient();
 
   useEffect(() => {
-    supabase.from("categories").select("*").order("display_order").then(({ data }) => setCategories(data ?? []));
-    supabase.from("pickup_points").select("*").eq("is_active", true).then(({ data }) => setPickupPoints(data ?? []));
+    supabase.from("categories").select("*").order("display_order").then(({ data }) => {
+      setCategories(data?.length ? data : MOCK_CATEGORIES);
+    });
+    supabase.from("pickup_points").select("*").eq("is_active", true).then(({ data }) => {
+      setPickupPoints(data?.length ? data : MOCK_PICKUP_POINTS);
+    });
     supabase.from("products").select("*, profiles(full_name, company_name, lat, lng), categories(name)").eq("is_active", true).then(({ data }) => {
-      setProducts(data ?? []);
+      if (data?.length) {
+        setProducts(data);
+        setUsingMock(false);
+      } else {
+        setProducts(MOCK_PRODUCTS);
+        setUsingMock(true);
+      }
       setLoading(false);
     });
 
@@ -85,6 +119,9 @@ export default function CatalogoPage() {
     if (!prodLat || !prodLng) return null;
     return haversineDistance(pickup.lat, pickup.lng, prodLat, prodLng);
   };
+
+  const itemCount = cart.reduce((s, i) => s + i.quantity, 0);
+  const hasProducts = products.length > 0;
 
   if (loading) return (
     <div className="mx-auto max-w-6xl px-4 py-8">
@@ -127,30 +164,41 @@ export default function CatalogoPage() {
         <p className="mx-auto mt-3 max-w-xl text-muted-foreground">
           Sfoglia i prodotti disponibili questa settimana. Ordina entro giovedì per il ritiro di sabato.
         </p>
+        {usingMock && (
+          <p className="mt-2 text-xs text-accent animate-pulse">
+            Demo: prodotti dimostrativi. Registrati come produttore per aggiungere i tuoi!
+          </p>
+        )}
       </section>
 
-      <div className="mb-8 flex flex-wrap items-center gap-4">
-        <div className="flex flex-wrap gap-2">
+      <div className="mb-6 flex flex-wrap items-center gap-2">
+        <Button
+          size="sm"
+          variant={selectedCategory === null ? "default" : "outline"}
+          onClick={() => setSelectedCategory(null)}
+        >
+          Tutti
+        </Button>
+        {categories.map((c) => (
           <Button
+            key={c.id}
             size="sm"
-            variant={selectedCategory === null ? "default" : "outline"}
-            onClick={() => setSelectedCategory(null)}
+            variant={selectedCategory === c.id ? "default" : "outline"}
+            onClick={() => setSelectedCategory(c.id)}
           >
-            Tutti
+            {c.name}
           </Button>
-          {categories.map((c) => (
-            <Button
-              key={c.id}
-              size="sm"
-              variant={selectedCategory === c.id ? "default" : "outline"}
-              onClick={() => setSelectedCategory(c.id)}
-            >
-              {c.name}
-            </Button>
-          ))}
-        </div>
+        ))}
         <div className="ml-auto flex items-center gap-2">
-          <MapPin className="h-4 w-4 text-muted-foreground" />
+          <button
+            onClick={() => setShowMap(!showMap)}
+            className={`inline-flex items-center gap-1 rounded-md border px-2 py-1 text-sm transition-colors ${
+              showMap ? "border-primary bg-primary/5 text-primary" : "border-border text-muted-foreground hover:text-primary"
+            }`}
+          >
+            <MapPin className="h-4 w-4" />
+            Punti ritiro
+          </button>
           <select
             className="rounded-md border border-border bg-white px-2 py-1 text-sm"
             value={selectedPickup ?? ""}
@@ -166,24 +214,60 @@ export default function CatalogoPage() {
         </div>
       </div>
 
-      {filtered.length === 0 && (
-        <p className="py-12 text-center text-stone-500">Nessun prodotto disponibile.</p>
+      {/* Pickup points map */}
+      {showMap && (
+        <div className="mb-8">
+          <h3 className="font-serif text-lg font-semibold mb-3 flex items-center gap-2">
+            <MapPin className="h-5 w-5 text-accent" />
+            Punti di ritiro attivi
+          </h3>
+          <PickupMap points={pickupPoints} />
+          <div className="mt-4 grid gap-3 sm:grid-cols-3">
+            {pickupPoints.map((p) => (
+              <div key={p.id} className="rounded-lg border border-border bg-background p-3 text-sm">
+                <p className="font-semibold">{p.name}</p>
+                <p className="text-muted-foreground text-xs mt-0.5">{p.address}</p>
+                <p className="text-muted-foreground/70 text-xs mt-0.5">Ritiro lun, mer, ven 9:00-12:00</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Cart indicator */}
+      {itemCount > 0 && (
+        <div className="mb-6">
+          <Link
+            href="/carrello"
+            className="inline-flex items-center gap-2 rounded-xl border-2 border-primary bg-primary/5 px-4 py-2.5 text-sm font-medium text-primary hover:bg-primary/10 transition-colors"
+          >
+            <ShoppingBasket className="h-5 w-5" />
+            {itemCount} {itemCount === 1 ? "prodotto" : "prodotti"} nel carrello
+            <ArrowLeft className="ml-1 h-4 w-4 rotate-180" />
+          </Link>
+        </div>
+      )}
+
+      {hasProducts && filtered.length === 0 && (
+        <p className="py-12 text-center text-muted-foreground">Nessun prodotto in questa categoria.</p>
       )}
 
       <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
         {filtered.map((product) => {
           const dist = distanceKm(product);
           return (
-            <Card key={product.id} className="overflow-hidden border-border transition-all duration-300 hover:shadow-lg hover:-translate-y-1 hover:border-primary/20">
-              <div className="aspect-video bg-muted flex items-center justify-center text-muted-foreground overflow-hidden">
+            <Card key={product.id} className="overflow-hidden border-border transition-all duration-300 hover:shadow-lg hover:-translate-y-1 hover:border-primary/20 group">
+              <div className="aspect-video bg-muted overflow-hidden">
                 {product.image_url ? (
-                  <img src={product.image_url} alt={product.name} className="h-full w-full object-cover" />
-                ) : (
                   <img
-                    src={getCategoryImage(product.categories?.name)}
+                    src={product.image_url}
                     alt={product.name}
-                    className="h-full w-full object-cover opacity-60"
+                    className="h-full w-full object-cover group-hover:scale-105 transition-transform duration-500"
                   />
+                ) : (
+                  <div className="h-full w-full flex items-center justify-center bg-muted text-muted-foreground text-sm">
+                    Foto prodotto
+                  </div>
                 )}
               </div>
               <CardContent className="p-4">
@@ -200,9 +284,7 @@ export default function CatalogoPage() {
                 </div>
                 <h3 className="font-serif text-xl font-semibold">{product.name}</h3>
                 <p className="mt-1 text-xs text-muted-foreground">
-                  <Link href={`/produttori/${product.producer_id}`} className="hover:text-primary underline underline-offset-2">
-                    {product.profiles?.company_name || product.profiles?.full_name}
-                  </Link>
+                  {product.profiles?.company_name || product.profiles?.full_name}
                 </p>
                 <p className="mt-2 text-sm text-muted-foreground line-clamp-2">{product.description}</p>
                 <div className="mt-4 flex items-center justify-between">
